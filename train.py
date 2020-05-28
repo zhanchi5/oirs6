@@ -59,15 +59,4 @@ H = autoencoder.fit(
     shuffle=True,
     callbacks=[TensorBoard(log_dir='/tmp/autoencoder')])
 
-N = np.arange(0, EPOCHS)
-plt.style.use("ggplot")
-plt.figure()
-plt.plot(N, H.history["loss"], label="train_loss")
-plt.plot(N, H.history["val_loss"], label="val_loss")
-plt.title("Training Loss and Accuracy")
-plt.xlabel("Epoch")
-plt.ylabel("Loss/Accuracy")
-plt.legend(loc="lower left")
-plt.savefig(PLOT_PATH)
-
 autoencoder.save(MODEL)
