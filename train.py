@@ -8,8 +8,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from imutils import paths
 import cv2
-from model import Autoencoder
+from model import autoencoder
 from keras.callbacks import TensorBoard
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input
+from tensorflow.keras.optimizers import RMSprop
 
 
 TRAIN_DATA = 'data/train'
@@ -47,9 +50,9 @@ testXNoisy = np.clip(testX + testNoise, 0, 1)
 
 print("[INFO] building autoencoder...")
 
-
-autoencoder = Autoencoder().build(IMAGE_HEIGHT, IMAGE_WIDTH, 3)
-autoencoder.compile(loss="binary_crossentropy", optimizer='adadelta')
+input_img = Input(shape=(IMAGE_HEIGHT, IMAGE_WIDTH, 3))
+autoencoder = Model(input_img, autoencoder(input_img))
+autoencoder.compile(loss="mean_squared_error", optimizer=RMSprop())
 
 H = autoencoder.fit(
     trainXNoisy, trainX,
@@ -58,5 +61,16 @@ H = autoencoder.fit(
     batch_size=BS,
     shuffle=True,
     callbacks=[TensorBoard(log_dir='/tmp/autoencoder')])
+
+N = np.arange(0, EPOCHS)
+plt.style.use("ggplot")
+plt.figure()
+plt.plot(N, H.history["loss"], label="train_loss")
+plt.plot(N, H.history["val_loss"], label="val_loss")
+plt.title("Training Loss and Accuracy")
+plt.xlabel("Epoch")
+plt.ylabel("Loss/Accuracy")
+plt.legend(loc="lower left")
+plt.savefig(PLOT_PATH)
 
 autoencoder.save(MODEL)

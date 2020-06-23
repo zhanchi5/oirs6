@@ -1,34 +1,24 @@
-from tensorflow.keras.layers import Flatten
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.layers import Reshape
-from tensorflow.keras.layers import Input
-from tensorflow.keras.models import Model
+
+from tensorflow.keras.layers import Input, Dense, Convolution2D, MaxPooling2D, UpSampling2D, Conv2D
 
 
-class Autoencoder:
-	encoding_dim = 49
+encoding_dim = 128
 
-	def build(self, height, width, channels):
-		# Encoder
-		input_img = Input(shape=(height, width, channels))
+def autoencoder(input_img):
+	# Encoder
+	#
+	conv1 = Conv2D(32, (3, 3), activation='relu', padding='same')(input_img)
+	pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
+	conv2 = Conv2D(64, (3, 3), activation='relu', padding='same')(pool1)
+	pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
+	conv3 = Conv2D(128, (3, 3), activation='relu', padding='same')(pool2)
 
-		flat_img = Flatten()(input_img)
 
-		x1 = Dense(self.encoding_dim*3, activation='relu')(flat_img)
-		x2 = Dense(self.encoding_dim*2, activation='relu')(x1)
-		encoded = Dense(self.encoding_dim, activation='linear')(x2)
-		
-		# Decoder
-		input_encoded = Input(shape=(self.encoding_dim,))
-		x1 = Dense(self.encoding_dim*2, activation='relu')(input_encoded)
-		x2 = Dense(self.encoding_dim*3, activation='relu')(x1)
-		flat_decoded = Dense(height*width*channels, activation='sigmoid')(x2)
 
-		decoded = Reshape((height, width, channels))(flat_decoded)
+	conv4 = Conv2D(128, (3, 3), activation='relu', padding='same')(conv3)
+	up1 = UpSampling2D((2,2))(conv4)
+	conv5 = Conv2D(64, (3, 3), activation='relu', padding='same')(up1) 
+	up2 = UpSampling2D((2,2))(conv5) 
+	decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(up2) 
 
-		# First arg - input layers, second arg - output layers
-		encoder = Model(input_img, encoded, name="encoder")
-		decoder = Model(input_encoded, decoded, name="decoder")
-
-		autoencoder = Model(input_img, decoder(encoder(input_img)), name="autoencoder")
-		return autoencoder
+	return decoded
